@@ -22,14 +22,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
 
-app.get('/', (req, res) => {
-  res.send('hello')
-})
-
 const run = async () => {
   try {
     const techMaintenance = client.db("techMaintenance");
     const servicesCollection = techMaintenance.collection("services");
+
+    app.get('/services-limited', async (req, res) => {
+      const query = {};
+
+      const services = await servicesCollection.find(query).limit(3).toArray();
+
+      res.send(services);
+    })
 
     app.post('/add-service', async (req, res) => {
       const data = req.body.formData;
