@@ -141,13 +141,10 @@ const run = async () => {
       res.send(reviews);
     })
 
+    // edit a review
     app.put('/edit-review/:id', async (req,res) => {
       const id = req.params.id;
       const data = req.body;
-
-
-      console.log(id);
-      console.log(data);
 
       const rating = data.rating;
       const review = data.review;
@@ -163,6 +160,18 @@ const run = async () => {
       }
 
       const result = await reviewsCollection.updateOne(filter, updateDoc, options);
+
+      res.send(result);
+    })
+
+    // delete a review
+    app.delete('/delete-review/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+
+      const query = { _id: ObjectId(id) };
+
+      const result = await reviewsCollection.deleteOne(query);
 
       res.send(result);
     })
