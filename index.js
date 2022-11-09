@@ -84,6 +84,7 @@ const run = async () => {
       res.send(result);
     })
 
+    // get all reviews of a single service
     app.get('/reviews/:id', async (req, res) => {
       const id = req.params.id;
 
@@ -96,6 +97,31 @@ const run = async () => {
       const reviews = await reviewsCollection.find(query, options).toArray();
 
       res.send(reviews);
+    })
+
+    // post a review by service id
+    app.post('/reviews/:id', async (req, res) => {
+      const id = req.params.id;
+
+      const data = req.body;
+
+      const review = req.body.review;
+      const rating = req.body.rating;
+      const userMail = req.body.email;
+      const userPhoto = req.body.userPhoto;
+
+      const doc = {
+        serviceId: ObjectId(id),
+        userMail,
+        review,
+        rating,
+        userPhoto,
+        updatedDate: new Date().toISOString()
+      }
+
+      const result = await reviewsCollection.insertOne(doc);
+
+      res.send(result);
     })
   } finally {
 
