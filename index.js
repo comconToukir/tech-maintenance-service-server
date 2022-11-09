@@ -45,6 +45,16 @@ const run = async () => {
       res.send(services);
     })
 
+    // get individual service
+    app.get('/service/:id', async (req, res) => {
+      const id = req.params.id;
+      
+      const query = { _id: ObjectId(id)};
+
+      const service = await servicesCollection.findOne(query);
+
+      res.send(service);
+    })
 
     // posting a new service
     app.post('/add-service', async (req, res) => {
