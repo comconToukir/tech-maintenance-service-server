@@ -89,7 +89,6 @@ const run = async () => {
       const id = req.params.id;
 
       const query = { serviceId: ObjectId(id) }
-
       const options = {
         sort: { updatedDate: -1 }
       }
@@ -105,21 +104,65 @@ const run = async () => {
 
       const data = req.body;
 
-      const review = req.body.review;
-      const rating = req.body.rating;
-      const userMail = req.body.email;
-      const userPhoto = req.body.userPhoto;
+      const serviceName = data.serviceName;
+      const review = data.review;
+      const rating = data.rating;
+      const userMail = data.email;
+      const userName = data.name;
+      const userPhoto = data.userPhoto;
 
       const doc = {
         serviceId: ObjectId(id),
-        userMail,
+        serviceName,
         review,
         rating,
+        userMail,
+        userName,
         userPhoto,
         updatedDate: new Date().toISOString()
       }
 
       const result = await reviewsCollection.insertOne(doc);
+
+      res.send(result);
+    })
+
+    // get filtered reviews by user email 
+    app.get('/my-reviews', async (req, res) => {
+      const email = req.query.email;
+
+      const query = { userMail: email }
+      const options = {
+        sort: { updatedDate: -1 }
+      }
+
+      const reviews = await reviewsCollection.find(query, options).toArray();
+
+      res.send(reviews);
+    })
+
+    app.put('/edit-review/:id', async (req,res) => {
+      const id = req.params.id;
+      const data = req.body;
+
+
+      console.log(id);
+      console.log(data);
+
+      const rating = data.rating;
+      const review = data.review;
+
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: false }; 
+
+      const updateDoc = {
+        $set: {
+          rating: rating,
+          review: review
+        }
+      }
+
+      const result = await reviewsCollection.updateOne(filter, updateDoc, options);
 
       res.send(result);
     })
