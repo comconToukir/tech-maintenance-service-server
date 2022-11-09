@@ -26,6 +26,7 @@ const run = async () => {
   try {
     const techMaintenance = client.db("techMaintenance");
     const servicesCollection = techMaintenance.collection("services");
+    const reviewsCollection = techMaintenance.collection("reviews");
 
     // get all services
     app.get('/services', async (req, res) => {
@@ -81,6 +82,20 @@ const run = async () => {
       const result = await servicesCollection.insertOne(doc);
 
       res.send(result);
+    })
+
+    app.get('/reviews/:id', async (req, res) => {
+      const id = req.params.id;
+
+      const query = { serviceId: ObjectId(id) }
+
+      const options = {
+        sort: { updatedDate: -1 }
+      }
+
+      const reviews = await reviewsCollection.find(query, options).toArray();
+
+      res.send(reviews);
     })
   } finally {
 
