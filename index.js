@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const { cloudinary } = require('./utils/cloudinary.utils');
 require('dotenv').config();
 
@@ -27,6 +27,16 @@ const run = async () => {
     const techMaintenance = client.db("techMaintenance");
     const servicesCollection = techMaintenance.collection("services");
 
+    // get all services
+    app.get('/services', async (req, res) => {
+      const query = {};
+
+      const services = await servicesCollection.find(query).toArray();
+
+      res.send(services);
+    })
+
+    // get 3 services for the home page
     app.get('/services-limited', async (req, res) => {
       const query = {};
 
@@ -35,6 +45,17 @@ const run = async () => {
       res.send(services);
     })
 
+    app.get('/service/:id', async (req, res) => {
+      const id = req.params.id;
+      
+      const query = { _id: ObjectId(id)};
+
+      const service = await servicesCollection.findOne(query);
+
+      res.send(service);
+    })
+
+    // posting a new service
     app.post('/add-service', async (req, res) => {
       const data = req.body.formData;
 
