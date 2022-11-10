@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const { cloudinary } = require('./utils/cloudinary.utils');
 require('dotenv').config();
 
@@ -20,6 +22,26 @@ const client = new MongoClient(
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
+app.use(cookieParser());
+
+// authorization middleware
+const authorization = (req, res, next) => {
+  const token = req.cookies.access_token;
+
+  if (!token) {
+    return res.sendStatus(403);
+  }
+
+  try {
+    const data = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    req.email = data.email;
+
+    return next();
+  } catch {
+    return res.sendStatus(403);
+  }
+}
 
 
 const run = async () => {
@@ -28,6 +50,42 @@ const run = async () => {
     const servicesCollection = techMaintenance.collection("services");
     const reviewsCollection = techMaintenance.collection("reviews");
     const blogsCollection = techMaintenance.collection("blogs");
+
+    // get access token in cookie
+    app.get("/login", async (req, res) => {
+      const email = req.query.email;
+
+      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET);
+
+      // httpOnly during development && secure during production
+      // , {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === "production"
+      // }
+
+
+      // .setHeader('Access-Control-Allow-Credentials', true)
+      // .setHeader('Access-Control-Allow-Origin', '*') //TODO: change to production url
+
+      return res.cookie("access_token", token, {
+        httpOnly: true,
+        secure: true,
+      })
+        .setHeader('Access-Control-Allow-Origin', 'https://phero-assignment-main.web.app')
+        .setHeader('Access-Control-Allow-Credentials', true)
+        .setHeader("Access-Control-Allow-Headers", "Content-Type")
+        .status(200)
+        .json({ message: "Logged in successfully" })
+    })
+
+    // clear cookie from website when logging out
+    app.get('/logout', (req, res) => {
+
+      return res
+        .clearCookie("access_token")
+        .status(200)
+        .json({ message: "Logged out successfully" })
+    })
 
     // get all services
     app.get('/services', async (req, res) => {
@@ -157,6 +215,10 @@ const run = async () => {
     // get filtered reviews by user email 
     app.get('/my-reviews', async (req, res) => {
       const email = req.query.email;
+
+      // if (email !== req.email) {
+      //   res.status(403).send("forbidden")
+      // }
 
       const query = { userMail: email }
       const options = {
