@@ -27,6 +27,7 @@ const run = async () => {
     const techMaintenance = client.db("techMaintenance");
     const servicesCollection = techMaintenance.collection("services");
     const reviewsCollection = techMaintenance.collection("reviews");
+    const blogsCollection = techMaintenance.collection("blogs");
 
     // get all services
     app.get('/services', async (req, res) => {
@@ -37,20 +38,45 @@ const run = async () => {
       res.send(services);
     })
 
+    // get all blogs
+    app.get('/blogs', async (req, res) => {
+      const query = {};
+
+      const blogs = await blogsCollection.find(query).toArray();
+
+      res.send(blogs);
+    })
+
     // get 3 services for the home page
     app.get('/services-limited', async (req, res) => {
       const query = {};
+      const options = {
+        sort: { updatedDate: -1 }
+      };
 
-      const services = await servicesCollection.find(query).limit(3).toArray();
+      const services = await servicesCollection.find(query, options).limit(3).toArray();
 
       res.send(services);
+    })
+
+    // get 3 reviews for the home page
+    app.get('/reviews-limited', async (req, res) => {
+      const rating = 5 + "";
+      const query = { rating: { $eq: rating } };
+      const options = {
+        sort: { updatedDate: -1 }
+      };
+
+      const reviews = await reviewsCollection.find(query, options).limit(3).toArray();
+
+      res.send(reviews);
     })
 
     // get individual service
     app.get('/service/:id', async (req, res) => {
       const id = req.params.id;
-      
-      const query = { _id: ObjectId(id)};
+
+      const query = { _id: ObjectId(id) };
 
       const service = await servicesCollection.findOne(query);
 
@@ -76,7 +102,8 @@ const run = async () => {
         serviceName,
         imageURL,
         price,
-        description
+        description,
+        updatedDate: new Date().toISOString()
       }
 
       const result = await servicesCollection.insertOne(doc);
@@ -142,7 +169,7 @@ const run = async () => {
     })
 
     // edit a review
-    app.put('/edit-review/:id', async (req,res) => {
+    app.put('/edit-review/:id', async (req, res) => {
       const id = req.params.id;
       const data = req.body;
 
@@ -150,7 +177,7 @@ const run = async () => {
       const review = data.review;
 
       const filter = { _id: ObjectId(id) };
-      const options = { upsert: false }; 
+      const options = { upsert: false };
 
       const updateDoc = {
         $set: {
@@ -167,7 +194,6 @@ const run = async () => {
     // delete a review
     app.delete('/delete-review/:id', async (req, res) => {
       const id = req.params.id;
-      console.log(id);
 
       const query = { _id: ObjectId(id) };
 
