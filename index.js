@@ -19,16 +19,18 @@ const client = new MongoClient(
 });
 
 // middlewares setup
-app.use(cors({
-  origin: 'https://phero-assignment-main.web.app',
-  credentials:  true
-}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use(cookieParser());
+app.use(cors({
+  origin: 'https://genuine-dusk-b585b7.netlify.app',
+  credentials: true,
+  sameSite: "none"
+}));
 
 //! cannot set the browser to accept cookie (works in thunder client)
-//! tried options - 1. fetch ( withCredentials: true ) - 2. axios - 3. disabled extensions
+//! tried options - 1. axios ( withCredentials: true ) - 2. fetch (credentials: true) - 3. disabled extensions
+//! tried options server side
 
 // authorization middleware
 const authorization = (req, res, next) => {
@@ -73,15 +75,17 @@ const run = async () => {
       // .setHeader('Access-Control-Allow-Credentials', true)
       // .setHeader('Access-Control-Allow-Origin', '*') //TODO: change to production url
 
-      return res.cookie("access_token", token, {
+      res.cookie("access_token", token, {
         httpOnly: true,
         secure: true,
+        sameSite: 'none'
       })
-        .setHeader('Access-Control-Allow-Origin', 'https://phero-assignment-main.web.app')
+        .setHeader('Access-Control-Allow-Origin', 'https://genuine-dusk-b585b7.netlify.app')
         .setHeader('Access-Control-Allow-Credentials', true)
-        .setHeader("Access-Control-Allow-Headers", "Content-Type")
-        .status(200)
-        .json({ message: "Logged in successfully" })
+        // .setHeader('Access-Control-Allow-Methods', "Get")
+        .setHeader("Access-Control-Allow-Headers", 'Origin, X-Requested-With, Content-Type, Accept')
+
+      res.status(200).json({ message: "Logged in successfully" })
     })
 
     // clear cookie from website when logging out
@@ -89,6 +93,7 @@ const run = async () => {
 
       return res
         .clearCookie("access_token")
+        .setHeader('Access-Control-Allow-Origin', 'https://genuine-dusk-b585b7.netlify.app')
         .status(200)
         .json({ message: "Logged out successfully" })
     })
